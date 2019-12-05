@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_places/Widgets/MenuLateral.dart';
+import 'package:flutter_places/Widgets/SwiperCard.dart';
 import 'package:flutter_places/Widgets/page_view_widget.dart';
 import 'package:flutter_places/src/models/place_model.dart';
 import 'package:flutter_places/src/repository/place_repository.dart';
+import 'package:flutter_places/src/repository/user_repository.dart';
+import 'package:flutter_swiper/flutter_swiper.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -12,19 +15,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   PlaceRepository _placeRepository = new PlaceRepository();
-  bool liked = false;
+  UserRepository _userRepository = new UserRepository();
+  
   Size _scrSize;
   String path = "assets/images/";
-
-  _pressed() {
-    setState(() {
-      liked = !liked;
-    });
-  }
+  
 
   @override
   Widget build(BuildContext context) {
     _scrSize = MediaQuery.of(context).size;
+    
     return Scaffold(
       appBar: AppBar(
         title: Text("Trip Places"),
@@ -69,10 +69,32 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _backgroundimage() {
-    return Image.asset('assets/images/back_top.jpg',
+    /*return Image.asset('assets/images/back_top.jpg',
         fit: BoxFit.cover,
         width: double.infinity,
-        height: _scrSize.height * 0.25);
+        height: _scrSize.height * 0.25);*/
+
+    return StreamBuilder(
+      stream: _placeRepository.images(),
+      builder: (BuildContext context, AsyncSnapshot<List<Places>> snapshot) {
+        List<dynamic> imagen;
+        if (!snapshot.hasData) return CircularProgressIndicator();
+
+        List<Places> data = snapshot.data;
+        imagen = data.map((f) {
+          return f.imagenes[0];
+        }).toList();
+
+        //SwiperLayout.STACK
+        return Container(
+          height: _scrSize.height * 0.25,
+          child: SwiperCard(
+            items: imagen,
+            tipo: SwiperLayout.DEFAULT,
+          ),
+        );
+      },
+    );
   }
 
   Widget _listPlaces() {
@@ -80,9 +102,7 @@ class _HomePageState extends State<HomePage> {
       stream: _placeRepository.all(),
       builder: (BuildContext context, AsyncSnapshot<List<Places>> snapshot) {
         if (!snapshot.hasData) return CircularProgressIndicator();
-
         List<Places> data = snapshot.data;
-
         return ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
@@ -104,23 +124,7 @@ class _HomePageState extends State<HomePage> {
                     height: 200,
                     child: PageViewWidget(items: data[index].imagenes),
                   ),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(40.0),
-                    child: Container(
-                      color: Colors.blue,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.max,
-                        children: <Widget>[
-                          _like(),
-                          Text(
-                            '${data[index].like.length}',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  
                 ],
               );
             });
@@ -128,13 +132,5 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _like() {
-    return IconButton(
-      icon: Icon(
-        liked ? Icons.favorite : Icons.favorite_border,
-        color: liked ? Colors.red : Colors.white,
-      ),
-      onPressed: () => _pressed(),
-    );
-  }
+  
 }

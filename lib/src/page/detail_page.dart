@@ -1,15 +1,43 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_places/Widgets/MenuLateral.dart';
 import 'package:flutter_places/Widgets/SwiperCard.dart';
 import 'package:flutter_places/src/models/place_model.dart';
 import 'package:flutter_places/src/models/placecomments_model.dart';
 import 'package:flutter_places/src/page/styles/text_style.dart';
 import 'package:flutter_places/src/repository/place_repository.dart';
+import 'package:flutter_places/src/repository/user_repository.dart';
+import 'package:flutter_swiper/flutter_swiper.dart';
 
-class Detailpage extends StatelessWidget {
+class Detailpage extends StatefulWidget {
   Detailpage({Key key}) : super(key: key);
+  static final GlobalKey<FormState> _formkey = GlobalKey<FormState>();
+
+  @override
+  _DetailpageState createState() => _DetailpageState();
+}
+
+class _DetailpageState extends State<Detailpage> {
+  bool liked = false;
+  
+
   Size _scrSize;
+
+  _pressed()async{
+    setState(() {
+      print('object');
+      liked=!liked;
+    });
+  }
+  FirebaseUser user;
+
   PlaceRepository _placeRepository = new PlaceRepository();
+
+  UserRepository _userRepository = new UserRepository();
+
+  TextEditingController _comment = TextEditingController();
+  
 
   @override
   Widget build(BuildContext context) {
@@ -35,57 +63,76 @@ class Detailpage extends StatelessWidget {
               opacity: 0.3,
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.max,
-            children: <Widget>[
-              Container(
-                height: _scrSize.height * 0.40,
-                width: double.infinity,
-                child: SwiperCard(items: places.imagenes),
-              ),
-              
-              RaisedButton(
-          onPressed: () =>Navigator.pushNamed(context, "location",
-                          arguments: places),
-          textColor: Colors.white,
-          padding: const EdgeInsets.all(0.0),
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: <Color>[
-                  Color(0xFF0D47A1),
-                  Color(0xFF1976D2),
-                  Color(0xFF42A5F5),
-                ],
-              ),
-            ),
-            padding: const EdgeInsets.all(10.0),
-            child: const Text(
-              'Ubicacion',
-              style: TextStyle(fontSize: 20)
-            ),
-          ),
-        ),
-                  horizontalLine(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(vertical: 10.0),
-                  child: Column(
-                    children: <Widget>[
-                      _titulos('${places.name} - ${places.city}'),
-                      Container(
-                        padding:
-                            EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
-                        child: _detalle('${places.description}',
-                            estilo: textStyleOrigen),
-                      ),
-                      _titulos('Comentarios'),
-                      _listComments(places.id),
-                    ],
-                  ),
+          SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.max,
+              children: <Widget>[
+                Container(
+                  height: _scrSize.height * 0.40,
+                  width: double.infinity,
+                  child: SwiperCard(items: places.imagenes, tipo: SwiperLayout.STACK,),
                 ),
-              ),
-            ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    RaisedButton(
+                      onPressed: () => Navigator.pushNamed(context, "location",
+                          arguments: places),
+                      textColor: Colors.white,
+                      padding: const EdgeInsets.all(0.0),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: <Color>[
+                              Color(0xFF0D47A1),
+                              Color(0xFF1976D2),
+                              Color(0xFF42A5F5),
+                            ],
+                          ),
+                        ),
+                        padding: const EdgeInsets.all(10.0),
+                        child:
+                            const Text('Ubicacion', style: TextStyle(fontSize: 20)),
+                      ),
+                    ),
+                    ClipRRect(
+                    borderRadius: BorderRadius.circular(15.0),
+                    child: Container(
+                      color: ((_userRepository.status == Status.Unauthenticated)
+                          ? Colors.grey
+                          : Colors.blue),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          _like(places ),
+                          Text(
+                            '${places.like.length}',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  ],
+                ),
+                horizontalLine(),
+                Column(
+                  children: <Widget>[
+                    _titulos('${places.name} - ${places.city}'),
+                    Container(
+                      padding:
+                          EdgeInsets.only(left: 10.0, right: 10.0, top: 10.0),
+                      child: _detalle('${places.description}',
+                          estilo: textStyleOrigen),
+                    ),
+                    _titulos('Comentarios'),
+                    _listComments(places.id),
+                    _newComment(places.id),
+                  ],
+                ),
+              ],
+            ),
           )
         ],
       ),
@@ -117,6 +164,77 @@ class Detailpage extends StatelessWidget {
             Text(
               'Escrito por: ' + autor,
               style: textStyleSubtitle,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _newComment(String idx) {
+    return Container(
+      padding: EdgeInsets.symmetric(vertical: 10.0, horizontal: 10.0),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10.0),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black12,
+              offset: Offset(0.0, 15.0),
+              blurRadius: 15.0),
+          BoxShadow(
+            color: Colors.black12,
+            offset: Offset(0.0, -10.0),
+            blurRadius: 15.0,
+          ),
+        ],
+      ),
+      child: Column(
+        children: <Widget>[
+          Form(
+            key: Detailpage._formkey,
+            child: TextFormField(
+              controller: _comment,
+              autofocus: false,
+              textCapitalization: TextCapitalization.sentences,
+              inputFormatters: [new LengthLimitingTextInputFormatter(200)],
+              maxLines: 6,
+              validator: (val) {
+                return val.trim().isEmpty
+                    ? 'Escriba un comentario por favor'
+                    : null;
+              },
+              onSaved: (value) async {
+                final FirebaseUser autor =
+                    await _userRepository.getCurrentUser();
+                PlacesComments placesComments =
+                    new PlacesComments(comment: value, autor: autor.email);
+                await _placeRepository.addComments(placesComments, idx);
+                _comment.clear();
+              },
+            ),
+          ),
+          if (_userRepository.status == Status.Authenticated)
+            RaisedButton(
+              onPressed: () {
+                if (Detailpage._formkey.currentState.validate())
+                  Detailpage._formkey.currentState.save();
+              },
+              textColor: Colors.white,
+              padding: const EdgeInsets.all(0.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: <Color>[
+                      Color(0xFF0D47A1),
+                      Color(0xFF1976D2),
+                      Color(0xFF42A5F5),
+                    ],
+                  ),
+                ),
+                padding: const EdgeInsets.all(10.0),
+                child: const Text('Agregar comentario',
+                    style: TextStyle(fontSize: 20)),
+              ),
             ),
         ],
       ),
@@ -178,5 +296,30 @@ class Detailpage extends StatelessWidget {
         ),
       ),
     );
+  }
+  Widget _like(Places places)  {
+    
+    setState(() {
+      liked = places.like.contains(_userRepository.user.uid);
+    });
+
+    return
+    (_userRepository.status == Status.Authenticated) ?
+    IconButton(
+      icon: Icon(
+        liked ? Icons.favorite : Icons.favorite_border,
+        color: liked ? Colors.red : Colors.white,
+      ),
+      onPressed: (liked) ? () => null : ()async {
+        print("dio clic en like");
+        List <dynamic> mg = new List();
+        mg.addAll(places.like);
+        mg.add(_userRepository.user.uid);
+
+        await _placeRepository.update(places.copyWith(like: mg));
+        _pressed();
+        
+      },
+    ): Container();
   }
 }

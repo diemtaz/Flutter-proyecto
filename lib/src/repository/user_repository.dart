@@ -12,7 +12,7 @@ class UserRepository with ChangeNotifier {
   FirebaseAuth _firebaseAuth;
   GoogleSignIn _googleSignIn;
   Status _status;
-  String _user;
+  FirebaseUser _user ;
 
   UserRepository._internal() {
     if (_firebaseAuth == null || _googleSignIn == null) {
@@ -20,6 +20,8 @@ class UserRepository with ChangeNotifier {
       _googleSignIn = GoogleSignIn();
       _status = Status.Uninitialized;
       _firebaseAuth.onAuthStateChanged.listen(_onAuthStateChanged);
+
+    
     }
   }
 
@@ -31,7 +33,7 @@ class UserRepository with ChangeNotifier {
 
 
   Status get status => _status;
-  String get user => _user;
+  FirebaseUser get user => _user;
 
   Future<FirebaseUser> signInWithGoogle() async {
     try {
@@ -44,7 +46,9 @@ class UserRepository with ChangeNotifier {
         idToken: googleAuth.idToken,
       );
       await _firebaseAuth.signInWithCredential(credential);
-      return _firebaseAuth.currentUser();
+      _user = await _firebaseAuth.currentUser();
+
+      return _user;
     } catch (e) {
       print(e);
       _status = Status.Unauthenticated;
@@ -60,12 +64,12 @@ class UserRepository with ChangeNotifier {
         password: password,
       );
       _status = Status.Authenticated;
-      _user = email;
-      return await _firebaseAuth.currentUser();
+      _user = await _firebaseAuth.currentUser();
+      return _user;
     } catch (e) {
       print(e);
       _status = Status.Unauthenticated;
-      _user = "";
+      _user = null;
       return e;
     }
   }

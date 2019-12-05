@@ -3,7 +3,8 @@ import 'package:flutter_swiper/flutter_swiper.dart';
 
 class SwiperCard extends StatelessWidget {
   final List items;
-  const SwiperCard({Key key, @required this.items}) : super(key: key);
+  final SwiperLayout tipo;
+  const SwiperCard({Key key, @required this.items, @required this.tipo}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,9 @@ class SwiperCard extends StatelessWidget {
         },
         itemCount: items.length,
         itemWidth: 300.0,
-        layout: SwiperLayout.STACK,
+        layout: tipo,
+        scale: 0.9,
+        viewportFraction: 0.8,
         autoplay: true,
         autoplayDelay: 3000,
       );

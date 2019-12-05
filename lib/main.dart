@@ -32,7 +32,7 @@ class MainApp extends StatelessWidget {
         'home': (BuildContext context) => HomePage(),
         'register': (BuildContext context) => RegisterPage(),
         'detail': (BuildContext context) => Detailpage(),
-        //'location': (BuildContext context) => LocationPlace(),
+        'location': (BuildContext context) => MapaPage(),
       },
     );
   }
