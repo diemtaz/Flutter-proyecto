@@ -36,7 +36,14 @@ dependencies:
   bottom_navy_bar: ^5.2.0
   location: ^2.3.5
   animated_splash: ^1.0.0
+  qrcode_reader: ^0.4.4
+  shared_preferences: 0.5.4+8
+  flutter_launcher_icons: ^0.7.3
   
+flutter_icons:
+  android: true 
+  ios: true
+  image_path: 'assets/icon/icon.png'
 
 dev_dependencies:
   flutter_test:

@@ -13,6 +13,7 @@ class UserRepository with ChangeNotifier {
   GoogleSignIn _googleSignIn;
   Status _status;
   FirebaseUser _user ;
+  FirebaseUser mCurrentUser;
 
   UserRepository._internal() {
     if (_firebaseAuth == null || _googleSignIn == null) {
@@ -20,9 +21,11 @@ class UserRepository with ChangeNotifier {
       _googleSignIn = GoogleSignIn();
       _status = Status.Uninitialized;
       _firebaseAuth.onAuthStateChanged.listen(_onAuthStateChanged);
-
-    
+      
+    _getCurrentUser();
     }
+    else
+    _getCurrentUser();
   }
 
   static final _instance = UserRepository._internal();
@@ -30,6 +33,9 @@ class UserRepository with ChangeNotifier {
   factory UserRepository(){
     return _instance;
   }
+_getCurrentUser () async {
+  mCurrentUser = await _firebaseAuth.currentUser();
+}
 
 
   Status get status => _status;

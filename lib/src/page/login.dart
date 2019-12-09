@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_places/src/models/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../Widgets/SocialIcons.dart';
 import '../../CustomIcons.dart';
 import '../repository/user_repository.dart';
@@ -12,77 +13,77 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-
   UserRepository _userRepository = new UserRepository();
 
   TextEditingController _emaillogin;
   TextEditingController _passwordlogin;
 
   @override
-  void initState() { 
+  void initState() {
     super.initState();
     _emaillogin = TextEditingController(text: "");
     _passwordlogin = TextEditingController(text: "");
   }
 
-  Future <void> _loginEmailPass()  async{
-      try {
-        
-        FirebaseUser resp =  await _userRepository.signInWithCredentials(_emaillogin.text, _passwordlogin.text);
-        
-        switch(_userRepository.status){
-          case Status.Uninitialized:
-              return Navigator.pushReplacementNamed(context, 'login');
-            case Status.Unauthenticated:
-                return Navigator.pushReplacementNamed(context, 'home');
-            case Status.Authenticating:
-              UserModel user = UserModel.fromFirebaseUser(resp);
-              _userRepository.add(user);
-              return Navigator.pushReplacementNamed(context, 'home');
-            case Status.Authenticated:
-              return Navigator.pushReplacementNamed(context, 'home');
+  Future<void> _loginEmailPass() async {
+    try {
+      FirebaseUser resp = await _userRepository.signInWithCredentials(
+          _emaillogin.text, _passwordlogin.text);
 
-        }
-      } catch (error) {
-        print("Usuario y/o contraseña incorrecta $error");
+      switch (_userRepository.status) {
+        case Status.Uninitialized:
+          return Navigator.pushReplacementNamed(context, 'login');
+        case Status.Unauthenticated:
+          return Navigator.pushReplacementNamed(context, 'home');
+        case Status.Authenticating:
+          UserModel user = UserModel.fromFirebaseUser(resp);
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userId', user.id);
+          await prefs.setString('email', user.email);
+          _userRepository.add(user);
+          return Navigator.pushReplacementNamed(context, 'home');
+        case Status.Authenticated:
+          return Navigator.pushReplacementNamed(context, 'home');
       }
+    } catch (error) {
+      print("Usuario y/o contraseña incorrecta $error");
     }
+  }
 
-
-  
-    Future<void> _loginGoogle() async {
-      try {
-        await _userRepository.signInWithGoogle();
-        switch(_userRepository.status){
-          case Status.Uninitialized:
-              return LoginPage();
-            case Status.Unauthenticated:
-                return Navigator.pushReplacementNamed(context, 'home');
-            case Status.Authenticating:
-              return Navigator.pushReplacementNamed(context, 'home');
-            case Status.Authenticated:
-              return Navigator.pushReplacementNamed(context, 'home');
-
-        }
-      } catch (error) {
-        print("No pudo realizar el logueo $error");
+  Future<void> _loginGoogle() async {
+    try {
+      await _userRepository.signInWithGoogle();
+      switch (_userRepository.status) {
+        case Status.Uninitialized:
+          return LoginPage();
+        case Status.Unauthenticated:
+          return Navigator.pushReplacementNamed(context, 'home');
+        case Status.Authenticating:
+          FirebaseUser user = await _userRepository.getCurrentUser();
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userId', user.uid);
+          await prefs.setString('email', user.email);
+          return Navigator.pushReplacementNamed(context, 'home');
+        case Status.Authenticated:
+          return Navigator.pushReplacementNamed(context, 'home');
       }
+    } catch (error) {
+      print("No pudo realizar el logueo $error");
     }
-
+  }
 
   Widget horizontalLine() => Padding(
-    padding: EdgeInsets.symmetric(horizontal: 16.0),
-    child: Container(
-      width: ScreenUtil.getInstance().setWidth(120),
-      height: 1.0,
-      color: Colors.black26.withOpacity(.2),
-    ),
-  );
+        padding: EdgeInsets.symmetric(horizontal: 16.0),
+        child: Container(
+          width: ScreenUtil.getInstance().setWidth(120),
+          height: 1.0,
+          color: Colors.black26.withOpacity(.2),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
-    ScreenUtil.instance = ScreenUtil.getInstance()
-      ..init(context);
+    ScreenUtil.instance = ScreenUtil.getInstance()..init(context);
     ScreenUtil.instance =
         ScreenUtil(width: 750, height: 1334, allowFontScaling: true);
     return new Scaffold(
@@ -132,7 +133,6 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-                      
                       InkWell(
                         child: Container(
                           width: ScreenUtil.getInstance().setWidth(330),
@@ -186,7 +186,6 @@ class _LoginPageState extends State<LoginPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
-
                       SocialIcon(
                         colors: [
                           Color(0xFFff4f38),
@@ -208,7 +207,8 @@ class _LoginPageState extends State<LoginPage> {
                         style: TextStyle(fontFamily: "Poppins-Medium"),
                       ),
                       InkWell(
-                        onTap: ()=> Navigator.pushReplacementNamed(context, 'register'),
+                        onTap: () =>
+                            Navigator.pushReplacementNamed(context, 'register'),
                         child: Text("SignUp",
                             style: TextStyle(
                                 color: Color(0xFF5d74e3),
@@ -225,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _formRegister(){
+  Widget _formRegister() {
     return new Container(
       width: double.infinity,
       height: ScreenUtil.getInstance().setHeight(500),
@@ -262,7 +262,7 @@ class _LoginPageState extends State<LoginPage> {
             TextFormField(
               controller: _emaillogin,
               validator: (value) =>
-                      (value.isEmpty) ? "Please Enter Email" : null,
+                  (value.isEmpty) ? "Please Enter Email" : null,
               decoration: InputDecoration(
                   hintText: "email",
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 12.0)),
@@ -278,7 +278,7 @@ class _LoginPageState extends State<LoginPage> {
               obscureText: true,
               controller: _passwordlogin,
               validator: (value) =>
-                      (value.isEmpty) ? "Please Enter Password" : null,
+                  (value.isEmpty) ? "Please Enter Password" : null,
               decoration: InputDecoration(
                   hintText: "Password",
                   hintStyle: TextStyle(color: Colors.grey, fontSize: 12.0)),
@@ -286,7 +286,6 @@ class _LoginPageState extends State<LoginPage> {
             SizedBox(
               height: ScreenUtil.getInstance().setHeight(35),
             ),
-            
           ],
         ),
       ),

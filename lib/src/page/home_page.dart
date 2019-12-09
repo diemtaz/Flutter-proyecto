@@ -5,7 +5,6 @@ import 'package:flutter_places/Widgets/SwiperCard.dart';
 import 'package:flutter_places/Widgets/page_view_widget.dart';
 import 'package:flutter_places/src/models/place_model.dart';
 import 'package:flutter_places/src/repository/place_repository.dart';
-import 'package:flutter_places/src/repository/user_repository.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,7 +14,6 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   PlaceRepository _placeRepository = new PlaceRepository();
-  UserRepository _userRepository = new UserRepository();
   
   Size _scrSize;
   String path = "assets/images/";
@@ -41,29 +39,6 @@ class _HomePageState extends State<HomePage> {
             ),
           )
         ],
-      ),
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.symmetric(vertical: 10.0),
-        decoration: BoxDecoration(color: Colors.white, boxShadow: [
-          BoxShadow(color: Colors.black, blurRadius: 10.0, offset: Offset(0, 7))
-        ]),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: <Widget>[
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[Icon(Icons.home), Text('Inicio')],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[Icon(Icons.explore), Text('Localización')],
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[Icon(Icons.settings), Text('Opciones')],
-            )
-          ],
-        ),
       ),
     );
   }

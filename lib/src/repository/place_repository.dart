@@ -3,8 +3,24 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_places/src/models/place_model.dart';
 import 'package:flutter_places/src/models/placecomments_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class PlaceRepository {
+  FirebaseUser mCurrentUser;
+  FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  PlaceRepository(){
+
+_getCurrentUser ();
+  }
+  _getCurrentUser () async {
+  mCurrentUser = await _firebaseAuth.currentUser();
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userId', mCurrentUser.uid);
+          await prefs.setString('email', mCurrentUser.email);
+
+}
   final placesCollection = Firestore.instance.collection('places');
 
   Future<void> add(Places places) {
@@ -29,9 +45,9 @@ class PlaceRepository {
     );
   }
 
-  Stream<List<Places>> favorites(FirebaseUser idUser) {
+  Stream<List<Places>> favorites(String user) {
     return placesCollection
-        .where('like',arrayContains: idUser.uid)
+        .where('like',arrayContains: user)
         .snapshots()
         .map(
       (snapshot) {
@@ -42,6 +58,13 @@ class PlaceRepository {
             .toList();
       },
     );
+  }
+
+ 
+
+  Future<Places> qrplace(String id) async {
+    final doc = await placesCollection.document(id).get();
+    return (doc.exists) ? Places.fromSnapshot(doc) : null;
   }
 
   Stream<List<Places>> images() {

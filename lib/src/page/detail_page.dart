@@ -9,6 +9,7 @@ import 'package:flutter_places/src/page/styles/text_style.dart';
 import 'package:flutter_places/src/repository/place_repository.dart';
 import 'package:flutter_places/src/repository/user_repository.dart';
 import 'package:flutter_swiper/flutter_swiper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Detailpage extends StatefulWidget {
   Detailpage({Key key}) : super(key: key);
@@ -20,16 +21,16 @@ class Detailpage extends StatefulWidget {
 
 class _DetailpageState extends State<Detailpage> {
   bool liked = false;
-  
+  bool user_id = false;
 
   Size _scrSize;
 
-  _pressed()async{
+  _pressed() async {
     setState(() {
-      print('object');
-      liked=!liked;
+      liked = !liked;
     });
   }
+
   FirebaseUser user;
 
   PlaceRepository _placeRepository = new PlaceRepository();
@@ -37,14 +38,12 @@ class _DetailpageState extends State<Detailpage> {
   UserRepository _userRepository = new UserRepository();
 
   TextEditingController _comment = TextEditingController();
-  
 
   @override
   Widget build(BuildContext context) {
     _scrSize = MediaQuery.of(context).size;
 
     final Places places = ModalRoute.of(context).settings.arguments;
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Trip Places"),
@@ -70,7 +69,10 @@ class _DetailpageState extends State<Detailpage> {
                 Container(
                   height: _scrSize.height * 0.40,
                   width: double.infinity,
-                  child: SwiperCard(items: places.imagenes, tipo: SwiperLayout.STACK,),
+                  child: SwiperCard(
+                    items: places.imagenes,
+                    tipo: SwiperLayout.STACK,
+                  ),
                 ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -91,29 +93,40 @@ class _DetailpageState extends State<Detailpage> {
                           ),
                         ),
                         padding: const EdgeInsets.all(10.0),
-                        child:
-                            const Text('Ubicacion', style: TextStyle(fontSize: 20)),
+                        child: const Text('Ubicacion',
+                            style: TextStyle(fontSize: 20)),
                       ),
                     ),
-                    ClipRRect(
-                    borderRadius: BorderRadius.circular(15.0),
-                    child: Container(
-                      color: ((_userRepository.status == Status.Unauthenticated)
-                          ? Colors.grey
-                          : Colors.blue),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        mainAxisSize: MainAxisSize.max,
-                        children: <Widget>[
-                          _like(places ),
-                          Text(
-                            '${places.like.length}',
-                            style: TextStyle(color: Colors.white, fontSize: 18),
+                    RaisedButton(
+                      onPressed: () => Navigator.pushNamed(context, "location",
+                          arguments: places),
+                      textColor: Colors.white,
+                      padding: const EdgeInsets.all(0.0),
+                      child: Container(
+                        height: 45,
+                        width: 105,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: <Color>[
+                              Color(0xFF0D47A1),
+                              Color(0xFF1976D2),
+                              Color(0xFF42A5F5),
+                            ],
                           ),
-                        ],
+                        ),
+                        padding: const EdgeInsets.all(10.0),
+                        child: Row(
+                          children: <Widget>[
+                            _like(places),
+                            Text(
+                              '${places.like.length}',
+                              style:
+                                  TextStyle(color: Colors.white, fontSize: 20),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
                   ],
                 ),
                 horizontalLine(),
@@ -190,29 +203,30 @@ class _DetailpageState extends State<Detailpage> {
       ),
       child: Column(
         children: <Widget>[
-          Form(
-            key: Detailpage._formkey,
-            child: TextFormField(
-              controller: _comment,
-              autofocus: false,
-              textCapitalization: TextCapitalization.sentences,
-              inputFormatters: [new LengthLimitingTextInputFormatter(200)],
-              maxLines: 6,
-              validator: (val) {
-                return val.trim().isEmpty
-                    ? 'Escriba un comentario por favor'
-                    : null;
-              },
-              onSaved: (value) async {
-                final FirebaseUser autor =
-                    await _userRepository.getCurrentUser();
-                PlacesComments placesComments =
-                    new PlacesComments(comment: value, autor: autor.email);
-                await _placeRepository.addComments(placesComments, idx);
-                _comment.clear();
-              },
+          if (_userRepository.status == Status.Authenticated)
+            Form(
+              key: Detailpage._formkey,
+              child: TextFormField(
+                controller: _comment,
+                autofocus: false,
+                textCapitalization: TextCapitalization.sentences,
+                inputFormatters: [new LengthLimitingTextInputFormatter(200)],
+                maxLines: 6,
+                validator: (val) {
+                  return val.trim().isEmpty
+                      ? 'Escriba un comentario por favor'
+                      : null;
+                },
+                onSaved: (value) async {
+                  final FirebaseUser autor =
+                      await _userRepository.getCurrentUser();
+                  PlacesComments placesComments =
+                      new PlacesComments(comment: value, autor: autor.email);
+                  await _placeRepository.addComments(placesComments, idx);
+                  _comment.clear();
+                },
+              ),
             ),
-          ),
           if (_userRepository.status == Status.Authenticated)
             RaisedButton(
               onPressed: () {
@@ -297,29 +311,32 @@ class _DetailpageState extends State<Detailpage> {
       ),
     );
   }
-  Widget _like(Places places)  {
+
+  Widget _like(Places places) {
     
-    setState(() {
-      liked = places.like.contains(_userRepository.user.uid);
-    });
+    
 
-    return
-    (_userRepository.status == Status.Authenticated) ?
-    IconButton(
-      icon: Icon(
-        liked ? Icons.favorite : Icons.favorite_border,
-        color: liked ? Colors.red : Colors.white,
-      ),
-      onPressed: (liked) ? () => null : ()async {
-        print("dio clic en like");
-        List <dynamic> mg = new List();
-        mg.addAll(places.like);
-        mg.add(_userRepository.user.uid);
+    return (_userRepository.status == Status.Authenticated)
+        ? IconButton(
+            icon: Icon(
+              liked ? Icons.favorite : Icons.favorite_border,
+              color: liked ? Colors.red : Colors.white,
+            ),
+            onPressed: (liked)
+                ? () => null
+                : () async {
+                  
+                    SharedPreferences prefs = await SharedPreferences.getInstance();
+                String user = prefs.getString('userId');
+                    List<dynamic> mg = new List();
+                    mg.addAll(places.like);
+                    mg.add(user);
 
-        await _placeRepository.update(places.copyWith(like: mg));
-        _pressed();
-        
-      },
-    ): Container();
+                    await _placeRepository.update(places.copyWith(like: mg));
+                liked= true;
+                    _pressed();
+                  },
+          )
+        : Container();
   }
 }

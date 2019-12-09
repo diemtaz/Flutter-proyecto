@@ -1,0 +1,3 @@
+com.matheusvillela.flutter.plugins.qrcodereader
+id activity_qr_read_reader
+layout activity_qr_read

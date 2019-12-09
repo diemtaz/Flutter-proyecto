@@ -1,0 +1,2 @@
+int id activity_qr_read_reader 0x7f0c0001
+int layout activity_qr_read 0x7f0f0001
