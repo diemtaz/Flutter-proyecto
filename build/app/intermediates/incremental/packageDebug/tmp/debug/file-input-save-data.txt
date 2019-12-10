@@ -1,5 +1,5 @@
 #Internal package file, do not edit.
-#Mon Dec 09 18:26:31 COT 2019
+#Mon Dec 09 18:42:32 COT 2019
 17.baseType=DIRECTORY
 4.path=flutter_assets/assets/images/fondo3.jpg
 25.base=/Flutter/Flutter-proyecto/build/app/intermediates/transforms/dexMerger/debug/0

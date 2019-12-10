@@ -42,9 +42,7 @@ class MenuLateral extends StatelessWidget {
                         "https://ichef.bbci.co.uk/news/660/cpsprodpb/6AFE/production/_102809372_machu.jpg"),
                     fit: BoxFit.cover)),
           ),
-          ListTile(
-            title: Text("${_userRepository.status}"),
-          ),
+          
           ListTile(
               title: Text("Leer QR"),
               onTap: () => Navigator.pushNamed(context, 'qrscan')),

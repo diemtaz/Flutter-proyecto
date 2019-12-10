@@ -313,8 +313,11 @@ class _DetailpageState extends State<Detailpage> {
   }
 
   Widget _like(Places places) {
-    
-    
+    liked = true;
+    setState(() {
+      liked = !liked;
+      
+    });
 
     return (_userRepository.status == Status.Authenticated)
         ? IconButton(
@@ -333,7 +336,7 @@ class _DetailpageState extends State<Detailpage> {
                     mg.add(user);
 
                     await _placeRepository.update(places.copyWith(like: mg));
-                liked= true;
+                    liked=false;
                     _pressed();
                   },
           )

@@ -43,7 +43,7 @@ class QrPage extends StatelessWidget {
     String code;
     Places place;
     try {
-print('ingreso aqui444');
+
       code = await QRCodeReader().scan();
 
       if(code != null){
